@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowLeft, Plus, Trash2, Save, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { InvoicePreview } from "./InvoicePreview";
+import { currencies, getCurrencySymbol } from "@/lib/currency";
 
 interface LineItem {
   id?: string;
@@ -40,12 +41,16 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   const [gstRate, setGstRate] = useState(10);
   const [paymentTerms, setPaymentTerms] = useState("Due within 30 days");
   const [notes, setNotes] = useState("");
+  const [currency, setCurrency] = useState("USD");
   const [companySettings, setCompanySettings] = useState<any>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [clients, setClients] = useState<any[]>([]);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
 
   useEffect(() => {
     loadCompanySettings();
+    loadClients();
     if (invoiceId) {
       loadInvoice();
     } else {
@@ -61,9 +66,31 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
 
     if (data) {
       setCompanySettings(data);
+      setCurrency(data.currency || "USD");
       setGstEnabled(data.gst_enabled);
       setGstRate(data.gst_rate);
       setPaymentTerms(data.default_payment_terms);
+    }
+  };
+
+  const loadClients = async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("*")
+      .order("name");
+
+    if (data) {
+      setClients(data);
+    }
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    setSelectedClientId(clientId);
+    const client = clients.find((c) => c.id === clientId);
+    if (client) {
+      setClientName(client.name);
+      setClientEmail(client.email || "");
+      setClientAddress(client.address || "");
     }
   };
 
@@ -105,6 +132,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
       setClientName(invoice.client_name);
       setClientEmail(invoice.client_email || "");
       setClientAddress(invoice.client_address || "");
+      setCurrency(invoice.currency || "USD");
       setGstEnabled(invoice.gst_enabled);
       setPaymentTerms(invoice.payment_terms || "");
       setNotes(invoice.notes || "");
@@ -171,6 +199,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         client_name: clientName,
         client_email: clientEmail,
         client_address: clientAddress,
+        currency: currency,
         subtotal: calculateSubtotal(),
         gst_enabled: gstEnabled,
         gst_amount: calculateGst(),
@@ -256,6 +285,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
           client_name: clientName,
           client_email: clientEmail,
           client_address: clientAddress,
+          currency: currency,
           subtotal: calculateSubtotal(),
           gst_enabled: gstEnabled,
           gst_amount: calculateGst(),
@@ -350,6 +380,24 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               <CardTitle>Client Details</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4">
+              {clients.length > 0 && (
+                <div>
+                  <Label>Select Saved Client</Label>
+                  <Select value={selectedClientId} onValueChange={handleClientSelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Choose a client or enter manually" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
               <div>
                 <Label>Client Name *</Label>
                 <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Company or individual name" />
@@ -401,7 +449,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                       />
                     </div>
                     <div className="col-span-2">
-                      <Label>Rate ($)</Label>
+                      <Label>Rate ({getCurrencySymbol(currency)})</Label>
                       <Input
                         type="number"
                         value={item.rate}
@@ -412,7 +460,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                     </div>
                     <div className="col-span-2">
                       <Label>Amount</Label>
-                      <Input value={`$${item.amount.toFixed(2)}`} disabled />
+                      <Input value={`${getCurrencySymbol(currency)}${item.amount.toFixed(2)}`} disabled />
                     </div>
                     <div className="col-span-1">
                       <Button
@@ -429,9 +477,25 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               </div>
 
               <div className="mt-6 space-y-2 border-t pt-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium">Currency:</span>
+                  <Select value={currency} onValueChange={setCurrency}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {currencies.map((curr) => (
+                        <SelectItem key={curr.code} value={curr.code}>
+                          {curr.symbol} {curr.code}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
                 <div className="flex justify-between text-lg">
                   <span>Subtotal:</span>
-                  <span className="font-semibold">${calculateSubtotal().toFixed(2)}</span>
+                  <span className="font-semibold">{getCurrencySymbol(currency)}{calculateSubtotal().toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
@@ -439,12 +503,12 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                     <Switch checked={gstEnabled} onCheckedChange={setGstEnabled} />
                     <span>GST ({gstRate}%):</span>
                   </div>
-                  <span className="font-semibold">${calculateGst().toFixed(2)}</span>
+                  <span className="font-semibold">{getCurrencySymbol(currency)}{calculateGst().toFixed(2)}</span>
                 </div>
 
                 <div className="flex justify-between text-xl font-bold border-t pt-2">
                   <span>Total:</span>
-                  <span className="text-primary">${calculateTotal().toFixed(2)}</span>
+                  <span className="text-primary">{getCurrencySymbol(currency)}{calculateTotal().toFixed(2)}</span>
                 </div>
               </div>
             </CardContent>

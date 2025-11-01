@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useReactToPrint } from "react-to-print";
 import { format } from "date-fns";
+import { getCurrencySymbol } from "@/lib/currency";
 
 interface InvoicePreviewProps {
   invoice: any;
@@ -51,6 +52,13 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
             {/* Header */}
             <div className="flex justify-between mb-12">
               <div>
+                {companySettings?.logo_url && (
+                  <img 
+                    src={companySettings.logo_url} 
+                    alt="Company logo" 
+                    className="h-16 mb-4 object-contain" 
+                  />
+                )}
                 <h1 className="text-5xl font-bold text-gray-900 mb-4">
                   {invoice.invoice_type === "quote" ? "QUOTE" : "INVOICE"}
                 </h1>
@@ -104,8 +112,8 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                   <tr key={index} className="border-b border-gray-200">
                     <td className="py-4 text-gray-900">{item.description}</td>
                     <td className="py-4 text-right text-gray-700">{item.quantity}</td>
-                    <td className="py-4 text-right text-gray-700">${item.rate.toFixed(2)}</td>
-                    <td className="py-4 text-right font-semibold text-gray-900">${item.amount.toFixed(2)}</td>
+                    <td className="py-4 text-right text-gray-700">{getCurrencySymbol(invoice.currency)}{item.rate.toFixed(2)}</td>
+                    <td className="py-4 text-right font-semibold text-gray-900">{getCurrencySymbol(invoice.currency)}{item.amount.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -116,17 +124,17 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
               <div className="w-80">
                 <div className="flex justify-between py-3 border-b border-gray-200">
                   <span className="text-gray-700">Subtotal:</span>
-                  <span className="font-semibold text-gray-900">${invoice.subtotal.toFixed(2)}</span>
+                  <span className="font-semibold text-gray-900">{getCurrencySymbol(invoice.currency)}{invoice.subtotal.toFixed(2)}</span>
                 </div>
                 {invoice.gst_enabled && (
                   <div className="flex justify-between py-3 border-b border-gray-200">
                     <span className="text-gray-700">GST ({invoice.gst_rate}%):</span>
-                    <span className="font-semibold text-gray-900">${invoice.gst_amount.toFixed(2)}</span>
+                    <span className="font-semibold text-gray-900">{getCurrencySymbol(invoice.currency)}{invoice.gst_amount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between py-4 border-t-2 border-gray-900">
                   <span className="text-xl font-bold text-gray-900">Total:</span>
-                  <span className="text-2xl font-bold text-blue-600">${invoice.total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold text-blue-600">{getCurrencySymbol(invoice.currency)}{invoice.total.toFixed(2)}</span>
                 </div>
               </div>
             </div>

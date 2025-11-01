@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      clients: {
+        Row: {
+          address: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           company_address: string | null
@@ -21,10 +51,12 @@ export type Database = {
           company_name: string
           company_phone: string | null
           created_at: string
+          currency: string
           default_payment_terms: string | null
           gst_enabled: boolean
           gst_rate: number
           id: string
+          logo_url: string | null
           next_invoice_number: number
           updated_at: string
         }
@@ -34,10 +66,12 @@ export type Database = {
           company_name: string
           company_phone?: string | null
           created_at?: string
+          currency?: string
           default_payment_terms?: string | null
           gst_enabled?: boolean
           gst_rate?: number
           id?: string
+          logo_url?: string | null
           next_invoice_number?: number
           updated_at?: string
         }
@@ -47,10 +81,12 @@ export type Database = {
           company_name?: string
           company_phone?: string | null
           created_at?: string
+          currency?: string
           default_payment_terms?: string | null
           gst_enabled?: boolean
           gst_rate?: number
           id?: string
+          logo_url?: string | null
           next_invoice_number?: number
           updated_at?: string
         }
@@ -62,6 +98,7 @@ export type Database = {
           client_email: string | null
           client_name: string
           created_at: string
+          currency: string
           due_date: string | null
           gst_amount: number
           gst_enabled: boolean
@@ -81,6 +118,7 @@ export type Database = {
           client_email?: string | null
           client_name: string
           created_at?: string
+          currency?: string
           due_date?: string | null
           gst_amount?: number
           gst_enabled?: boolean
@@ -100,6 +138,7 @@ export type Database = {
           client_email?: string | null
           client_name?: string
           created_at?: string
+          currency?: string
           due_date?: string | null
           gst_amount?: number
           gst_enabled?: boolean
