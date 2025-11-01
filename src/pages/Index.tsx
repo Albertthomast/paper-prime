@@ -1,13 +1,47 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import { InvoiceList } from "@/components/InvoiceList";
+import { InvoiceForm } from "@/components/InvoiceForm";
+import { Settings } from "@/components/Settings";
+
+type View = "list" | "form" | "settings";
 
 const Index = () => {
+  const [currentView, setCurrentView] = useState<View>("list");
+  const [editingInvoiceId, setEditingInvoiceId] = useState<string | undefined>();
+
+  const handleCreateInvoice = () => {
+    setEditingInvoiceId(undefined);
+    setCurrentView("form");
+  };
+
+  const handleEditInvoice = (id: string) => {
+    setEditingInvoiceId(id);
+    setCurrentView("form");
+  };
+
+  const handleBackToList = () => {
+    setCurrentView("list");
+    setEditingInvoiceId(undefined);
+  };
+
+  const handleViewSettings = () => {
+    setCurrentView("settings");
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <>
+      {currentView === "list" && (
+        <InvoiceList
+          onCreateInvoice={handleCreateInvoice}
+          onEditInvoice={handleEditInvoice}
+          onViewSettings={handleViewSettings}
+        />
+      )}
+      {currentView === "form" && (
+        <InvoiceForm invoiceId={editingInvoiceId} onBack={handleBackToList} />
+      )}
+      {currentView === "settings" && <Settings onBack={handleBackToList} />}
+    </>
   );
 };
 
