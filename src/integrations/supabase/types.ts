@@ -19,8 +19,10 @@ export type Database = {
           address: string | null
           created_at: string
           email: string | null
+          gst_number: string | null
           id: string
           name: string
+          pan_number: string | null
           phone: string | null
           updated_at: string
         }
@@ -28,8 +30,10 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          gst_number?: string | null
           id?: string
           name: string
+          pan_number?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -37,8 +41,10 @@ export type Database = {
           address?: string | null
           created_at?: string
           email?: string | null
+          gst_number?: string | null
           id?: string
           name?: string
+          pan_number?: string | null
           phone?: string | null
           updated_at?: string
         }
@@ -46,6 +52,8 @@ export type Database = {
       }
       company_settings: {
         Row: {
+          account_number: string | null
+          bank_name: string | null
           company_address: string | null
           company_email: string | null
           company_name: string
@@ -54,13 +62,19 @@ export type Database = {
           currency: string
           default_payment_terms: string | null
           gst_enabled: boolean
+          gst_number: string | null
           gst_rate: number
           id: string
+          ifsc_code: string | null
           logo_url: string | null
           next_invoice_number: number
+          next_quotation_number: number
+          pan_number: string | null
           updated_at: string
         }
         Insert: {
+          account_number?: string | null
+          bank_name?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name: string
@@ -69,13 +83,19 @@ export type Database = {
           currency?: string
           default_payment_terms?: string | null
           gst_enabled?: boolean
+          gst_number?: string | null
           gst_rate?: number
           id?: string
+          ifsc_code?: string | null
           logo_url?: string | null
           next_invoice_number?: number
+          next_quotation_number?: number
+          pan_number?: string | null
           updated_at?: string
         }
         Update: {
+          account_number?: string | null
+          bank_name?: string | null
           company_address?: string | null
           company_email?: string | null
           company_name?: string
@@ -84,10 +104,14 @@ export type Database = {
           currency?: string
           default_payment_terms?: string | null
           gst_enabled?: boolean
+          gst_number?: string | null
           gst_rate?: number
           id?: string
+          ifsc_code?: string | null
           logo_url?: string | null
           next_invoice_number?: number
+          next_quotation_number?: number
+          pan_number?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -96,7 +120,9 @@ export type Database = {
         Row: {
           client_address: string | null
           client_email: string | null
+          client_gst_number: string | null
           client_name: string
+          client_pan_number: string | null
           created_at: string
           currency: string
           due_date: string | null
@@ -116,7 +142,9 @@ export type Database = {
         Insert: {
           client_address?: string | null
           client_email?: string | null
+          client_gst_number?: string | null
           client_name: string
+          client_pan_number?: string | null
           created_at?: string
           currency?: string
           due_date?: string | null
@@ -136,7 +164,9 @@ export type Database = {
         Update: {
           client_address?: string | null
           client_email?: string | null
+          client_gst_number?: string | null
           client_name?: string
+          client_pan_number?: string | null
           created_at?: string
           currency?: string
           due_date?: string | null

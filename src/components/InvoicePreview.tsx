@@ -69,6 +69,8 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                       {companySettings.company_email && <p>{companySettings.company_email}</p>}
                       {companySettings.company_phone && <p>{companySettings.company_phone}</p>}
                       {companySettings.company_address && <p className="whitespace-pre-line">{companySettings.company_address}</p>}
+                      {companySettings.gst_number && <p>GST: {companySettings.gst_number}</p>}
+                      {companySettings.pan_number && <p>PAN: {companySettings.pan_number}</p>}
                     </>
                   )}
                 </div>
@@ -94,6 +96,8 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                 <p className="font-semibold text-lg">{invoice.client_name}</p>
                 {invoice.client_email && <p className="text-gray-600">{invoice.client_email}</p>}
                 {invoice.client_address && <p className="text-gray-600 whitespace-pre-line">{invoice.client_address}</p>}
+                {invoice.client_gst_number && <p className="text-gray-600">GST: {invoice.client_gst_number}</p>}
+                {invoice.client_pan_number && <p className="text-gray-600">PAN: {invoice.client_pan_number}</p>}
               </div>
             </div>
 
@@ -141,6 +145,16 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
 
             {/* Payment Terms & Notes */}
             <div className="space-y-6">
+              {companySettings?.bank_name && (
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Bank Details</h3>
+                  <div className="text-gray-700">
+                    <p><span className="font-semibold">Bank:</span> {companySettings.bank_name}</p>
+                    {companySettings.account_number && <p><span className="font-semibold">Account:</span> {companySettings.account_number}</p>}
+                    {companySettings.ifsc_code && <p><span className="font-semibold">IFSC:</span> {companySettings.ifsc_code}</p>}
+                  </div>
+                </div>
+              )}
               {invoice.payment_terms && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-500 uppercase mb-2">Payment Terms</h3>

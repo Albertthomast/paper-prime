@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,6 +11,7 @@ import { ArrowLeft, Plus, Trash2, Save, FileDown } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { InvoicePreview } from "./InvoicePreview";
 import { currencies, getCurrencySymbol } from "@/lib/currency";
+import { format } from "date-fns";
 
 interface LineItem {
   id?: string;
@@ -34,6 +35,8 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   const [clientName, setClientName] = useState("");
   const [clientEmail, setClientEmail] = useState("");
   const [clientAddress, setClientAddress] = useState("");
+  const [clientGstNumber, setClientGstNumber] = useState("");
+  const [clientPanNumber, setClientPanNumber] = useState("");
   const [lineItems, setLineItems] = useState<LineItem[]>([
     { description: "", quantity: 1, rate: 0, amount: 0 },
   ]);
@@ -47,16 +50,31 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   const [saving, setSaving] = useState(false);
   const [clients, setClients] = useState<any[]>([]);
   const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     loadCompanySettings();
     loadClients();
     if (invoiceId) {
       loadInvoice();
-    } else {
-      generateInvoiceNumber();
     }
   }, [invoiceId]);
+
+  useEffect(() => {
+    if (!invoiceId && companySettings) {
+      generateInvoiceNumber();
+    }
+  }, [invoiceType, companySettings]);
+
+  // Auto-save functionality
+  useEffect(() => {
+    if (hasChanges && invoiceId) {
+      const timer = setTimeout(() => {
+        autoSave();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [hasChanges, invoiceId, clientName, lineItems, status, invoiceDate, dueDate, currency, notes, paymentTerms]);
 
   const loadCompanySettings = async () => {
     const { data, error } = await supabase
@@ -91,18 +109,22 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
       setClientName(client.name);
       setClientEmail(client.email || "");
       setClientAddress(client.address || "");
+      setClientGstNumber(client.gst_number || "");
+      setClientPanNumber(client.pan_number || "");
+      setHasChanges(true);
     }
   };
 
   const generateInvoiceNumber = async () => {
-    const { data } = await supabase
-      .from("company_settings")
-      .select("next_invoice_number")
-      .single();
-
-    if (data) {
-      setInvoiceNumber(`INV-${String(data.next_invoice_number).padStart(4, "0")}`);
-    }
+    if (!companySettings) return;
+    
+    const prefix = invoiceType === "invoice" ? "INV" : "EQ";
+    const number = invoiceType === "invoice" 
+      ? companySettings.next_invoice_number 
+      : companySettings.next_quotation_number;
+    const dateStr = format(new Date(), "yyMMdd");
+    
+    setInvoiceNumber(`${prefix}${String(number).padStart(4, "0")}${dateStr}`);
   };
 
   const loadInvoice = async () => {
@@ -132,6 +154,8 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
       setClientName(invoice.client_name);
       setClientEmail(invoice.client_email || "");
       setClientAddress(invoice.client_address || "");
+      setClientGstNumber(invoice.client_gst_number || "");
+      setClientPanNumber(invoice.client_pan_number || "");
       setCurrency(invoice.currency || "USD");
       setGstEnabled(invoice.gst_enabled);
       setPaymentTerms(invoice.payment_terms || "");
@@ -154,6 +178,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
     }
     
     setLineItems(updated);
+    setHasChanges(true);
   };
 
   const addLineItem = () => {
@@ -178,6 +203,79 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
     return calculateSubtotal() + calculateGst();
   };
 
+  const autoSave = useCallback(async () => {
+    if (!invoiceId || !clientName) return;
+
+    try {
+      const invoiceData = {
+        invoice_number: invoiceNumber,
+        invoice_type: invoiceType,
+        invoice_date: invoiceDate,
+        due_date: dueDate || null,
+        status,
+        client_name: clientName,
+        client_email: clientEmail,
+        client_address: clientAddress,
+        client_gst_number: clientGstNumber,
+        client_pan_number: clientPanNumber,
+        currency: currency,
+        subtotal: calculateSubtotal(),
+        gst_enabled: gstEnabled,
+        gst_amount: calculateGst(),
+        total: calculateTotal(),
+        payment_terms: paymentTerms,
+        notes,
+      };
+
+      await supabase
+        .from("invoices")
+        .update(invoiceData)
+        .eq("id", invoiceId);
+
+      await supabase.from("line_items").delete().eq("invoice_id", invoiceId);
+
+      const lineItemsData = lineItems.map((item, index) => ({
+        invoice_id: invoiceId,
+        description: item.description,
+        quantity: item.quantity,
+        rate: item.rate,
+        amount: item.amount,
+        sort_order: index,
+      }));
+
+      await supabase.from("line_items").insert(lineItemsData);
+
+      setHasChanges(false);
+    } catch (error) {
+      console.error("Auto-save error:", error);
+    }
+  }, [invoiceId, clientName, invoiceNumber, invoiceType, invoiceDate, dueDate, status, clientEmail, clientAddress, clientGstNumber, clientPanNumber, currency, gstEnabled, paymentTerms, notes, lineItems]);
+
+  const deleteInvoice = async () => {
+    if (!invoiceId) return;
+
+    if (!confirm("Are you sure you want to delete this invoice?")) return;
+
+    try {
+      await supabase.from("line_items").delete().eq("invoice_id", invoiceId);
+      await supabase.from("invoices").delete().eq("id", invoiceId);
+
+      toast({
+        title: "Success",
+        description: "Invoice deleted successfully",
+      });
+
+      onBack();
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
   const saveInvoice = async () => {
     if (!clientName) {
       toast({
@@ -199,6 +297,8 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         client_name: clientName,
         client_email: clientEmail,
         client_address: clientAddress,
+        client_gst_number: clientGstNumber,
+        client_pan_number: clientPanNumber,
         currency: currency,
         subtotal: calculateSubtotal(),
         gst_enabled: gstEnabled,
@@ -230,11 +330,15 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         if (error) throw error;
         savedInvoiceId = data.id;
 
-        // Update next invoice number
+        // Update next invoice/quotation number
         if (companySettings) {
+          const updateField = invoiceType === "invoice" 
+            ? { next_invoice_number: companySettings.next_invoice_number + 1 }
+            : { next_quotation_number: companySettings.next_quotation_number + 1 };
+          
           await supabase
             .from("company_settings")
-            .update({ next_invoice_number: companySettings.next_invoice_number + 1 })
+            .update(updateField)
             .eq("id", companySettings.id);
         }
       }
@@ -260,6 +364,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         description: invoiceId ? "Invoice updated successfully" : "Invoice created successfully",
       });
 
+      setHasChanges(false);
       onBack();
     } catch (error) {
       console.error("Error saving invoice:", error);
@@ -285,6 +390,8 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
           client_name: clientName,
           client_email: clientEmail,
           client_address: clientAddress,
+          client_gst_number: clientGstNumber,
+          client_pan_number: clientPanNumber,
           currency: currency,
           subtotal: calculateSubtotal(),
           gst_enabled: gstEnabled,
@@ -310,13 +417,19 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
             Back to List
           </Button>
           <div className="flex gap-3">
+            {invoiceId && (
+              <Button variant="destructive" onClick={deleteInvoice}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </Button>
+            )}
             <Button variant="outline" onClick={() => setShowPreview(true)}>
               <FileDown className="mr-2 h-4 w-4" />
               Preview & Export PDF
             </Button>
             <Button onClick={saveInvoice} disabled={saving}>
               <Save className="mr-2 h-4 w-4" />
-              {saving ? "Saving..." : "Save"}
+              {saving ? "Saving..." : invoiceId ? "Save" : "Create"}
             </Button>
           </div>
         </div>
@@ -400,16 +513,60 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               
               <div>
                 <Label>Client Name *</Label>
-                <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="Company or individual name" />
+                <Input 
+                  value={clientName} 
+                  onChange={(e) => {
+                    setClientName(e.target.value);
+                    setHasChanges(true);
+                  }} 
+                  placeholder="Company or individual name" 
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Email</Label>
-                  <Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} />
+                  <Input 
+                    type="email" 
+                    value={clientEmail} 
+                    onChange={(e) => {
+                      setClientEmail(e.target.value);
+                      setHasChanges(true);
+                    }} 
+                  />
                 </div>
                 <div>
                   <Label>Address</Label>
-                  <Input value={clientAddress} onChange={(e) => setClientAddress(e.target.value)} />
+                  <Input 
+                    value={clientAddress} 
+                    onChange={(e) => {
+                      setClientAddress(e.target.value);
+                      setHasChanges(true);
+                    }} 
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>GST Number</Label>
+                  <Input 
+                    value={clientGstNumber} 
+                    onChange={(e) => {
+                      setClientGstNumber(e.target.value);
+                      setHasChanges(true);
+                    }} 
+                    placeholder="e.g., 22AAAAA0000A1Z5"
+                  />
+                </div>
+                <div>
+                  <Label>PAN Number</Label>
+                  <Input 
+                    value={clientPanNumber} 
+                    onChange={(e) => {
+                      setClientPanNumber(e.target.value);
+                      setHasChanges(true);
+                    }} 
+                    placeholder="e.g., AAAAA0000A"
+                  />
                 </div>
               </div>
             </CardContent>

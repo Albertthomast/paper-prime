@@ -20,6 +20,11 @@ export const Settings = ({ onBack }: SettingsProps) => {
   const [companyEmail, setCompanyEmail] = useState("");
   const [companyPhone, setCompanyPhone] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
+  const [companyGstNumber, setCompanyGstNumber] = useState("");
+  const [companyPanNumber, setCompanyPanNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [bankName, setBankName] = useState("");
   const [currency, setCurrency] = useState("USD");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [gstEnabled, setGstEnabled] = useState(true);
@@ -33,6 +38,8 @@ export const Settings = ({ onBack }: SettingsProps) => {
   const [newClientEmail, setNewClientEmail] = useState("");
   const [newClientPhone, setNewClientPhone] = useState("");
   const [newClientAddress, setNewClientAddress] = useState("");
+  const [newClientGstNumber, setNewClientGstNumber] = useState("");
+  const [newClientPanNumber, setNewClientPanNumber] = useState("");
   const [addingClient, setAddingClient] = useState(false);
 
   useEffect(() => {
@@ -52,6 +59,11 @@ export const Settings = ({ onBack }: SettingsProps) => {
       setCompanyEmail(data.company_email || "");
       setCompanyPhone(data.company_phone || "");
       setCompanyAddress(data.company_address || "");
+      setCompanyGstNumber(data.gst_number || "");
+      setCompanyPanNumber(data.pan_number || "");
+      setAccountNumber(data.account_number || "");
+      setIfscCode(data.ifsc_code || "");
+      setBankName(data.bank_name || "");
       setCurrency(data.currency || "USD");
       setLogoUrl(data.logo_url);
       setGstEnabled(data.gst_enabled);
@@ -139,6 +151,8 @@ export const Settings = ({ onBack }: SettingsProps) => {
           email: newClientEmail,
           phone: newClientPhone,
           address: newClientAddress,
+          gst_number: newClientGstNumber,
+          pan_number: newClientPanNumber,
         })
         .select()
         .single();
@@ -150,6 +164,8 @@ export const Settings = ({ onBack }: SettingsProps) => {
       setNewClientEmail("");
       setNewClientPhone("");
       setNewClientAddress("");
+      setNewClientGstNumber("");
+      setNewClientPanNumber("");
       setAddingClient(false);
 
       toast({
@@ -208,6 +224,11 @@ export const Settings = ({ onBack }: SettingsProps) => {
         company_email: companyEmail,
         company_phone: companyPhone,
         company_address: companyAddress,
+        gst_number: companyGstNumber,
+        pan_number: companyPanNumber,
+        account_number: accountNumber,
+        ifsc_code: ifscCode,
+        bank_name: bankName,
         currency: currency,
         logo_url: logoUrl,
         gst_enabled: gstEnabled,
@@ -299,6 +320,25 @@ export const Settings = ({ onBack }: SettingsProps) => {
                   rows={3}
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>GST Number</Label>
+                  <Input
+                    value={companyGstNumber}
+                    onChange={(e) => setCompanyGstNumber(e.target.value)}
+                    placeholder="e.g., 22AAAAA0000A1Z5"
+                  />
+                </div>
+                <div>
+                  <Label>PAN Number</Label>
+                  <Input
+                    value={companyPanNumber}
+                    onChange={(e) => setCompanyPanNumber(e.target.value)}
+                    placeholder="e.g., AAAAA0000A"
+                  />
+                </div>
+              </div>
               
               <div>
                 <Label>Currency</Label>
@@ -382,6 +422,41 @@ export const Settings = ({ onBack }: SettingsProps) => {
             </CardContent>
           </Card>
 
+          {/* Bank Account Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Bank Account Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Bank Name</Label>
+                <Input
+                  value={bankName}
+                  onChange={(e) => setBankName(e.target.value)}
+                  placeholder="e.g., State Bank of India"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Account Number</Label>
+                  <Input
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    placeholder="e.g., 1234567890"
+                  />
+                </div>
+                <div>
+                  <Label>IFSC Code</Label>
+                  <Input
+                    value={ifscCode}
+                    onChange={(e) => setIfscCode(e.target.value)}
+                    placeholder="e.g., SBIN0001234"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Clients Management */}
           <Card>
             <CardHeader>
@@ -429,6 +504,24 @@ export const Settings = ({ onBack }: SettingsProps) => {
                         onChange={(e) => setNewClientAddress(e.target.value)}
                         rows={2}
                       />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>GST Number</Label>
+                        <Input
+                          value={newClientGstNumber}
+                          onChange={(e) => setNewClientGstNumber(e.target.value)}
+                          placeholder="e.g., 22AAAAA0000A1Z5"
+                        />
+                      </div>
+                      <div>
+                        <Label>PAN Number</Label>
+                        <Input
+                          value={newClientPanNumber}
+                          onChange={(e) => setNewClientPanNumber(e.target.value)}
+                          placeholder="e.g., AAAAA0000A"
+                        />
+                      </div>
                     </div>
                     <div className="flex gap-2">
                       <Button onClick={addClient} size="sm">
