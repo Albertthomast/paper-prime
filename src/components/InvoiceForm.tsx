@@ -377,7 +377,6 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
       });
 
       setHasChanges(false);
-      onBack();
     } catch (error) {
       console.error("Error saving invoice:", error);
       toast({

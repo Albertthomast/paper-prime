@@ -49,19 +49,30 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
         {/* Invoice Preview */}
         <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
           <div ref={printRef} className="p-16" style={{ width: "210mm", minHeight: "297mm" }}>
-            {/* Header with company info on left, invoice details on right */}
+            {/* Logo */}
+            <div className="mb-8">
+              {companySettings?.logo_url && (
+                <img 
+                  src={companySettings.logo_url} 
+                  alt="Company logo" 
+                  className="h-16 object-contain" 
+                />
+              )}
+            </div>
+
+            {/* Header with invoice type on right */}
+            <div className="flex justify-end mb-8">
+              <h1 className="text-5xl font-bold text-gray-900">
+                {invoice.invoice_type === "quote" ? "QUOTE" : invoice.invoice_type === "proforma" ? "PROFORMA INVOICE" : "INVOICE"}
+              </h1>
+            </div>
+
+            {/* Bill From (left) and Bill To (right) */}
             <div className="flex justify-between mb-12">
               {/* Left side - Company info */}
-              <div className="flex-1">
-                {companySettings?.logo_url && (
-                  <img 
-                    src={companySettings.logo_url} 
-                    alt="Company logo" 
-                    className="h-16 mb-4 object-contain" 
-                  />
-                )}
+              <div className="flex-1 pr-8">
+                <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Bill From</h2>
                 <div className="text-gray-600">
-                  <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Bill From</h2>
                   {companySettings && (
                     <>
                       <p className="font-semibold text-lg text-gray-900">{companySettings.company_name}</p>
@@ -75,30 +86,26 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                 </div>
               </div>
               
-              {/* Right side - Invoice details */}
-              <div className="text-right">
-                <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                  {invoice.invoice_type === "quote" ? "QUOTE" : invoice.invoice_type === "proforma" ? "PROFORMA INVOICE" : "INVOICE"}
-                </h1>
-                <p className="text-3xl font-bold text-blue-600 mb-2">#{invoice.invoice_number}</p>
-                <div className="text-gray-600 space-y-1">
-                  <p><span className="font-semibold">Date:</span> {format(new Date(invoice.invoice_date), "MMM dd, yyyy")}</p>
+              {/* Right side - Bill To and Invoice details */}
+              <div className="flex-1 pl-8">
+                <div className="mb-6">
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Bill To</h2>
+                  <div className="text-gray-600">
+                    <p className="font-semibold text-lg text-gray-900">{invoice.client_name}</p>
+                    {invoice.client_email && <p>{invoice.client_email}</p>}
+                    {invoice.client_address && <p className="whitespace-pre-line">{invoice.client_address}</p>}
+                    {invoice.client_gst_number && <p>GST: {invoice.client_gst_number}</p>}
+                    {invoice.client_pan_number && <p>PAN: {invoice.client_pan_number}</p>}
+                  </div>
+                </div>
+                
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <p className="text-gray-600"><span className="font-semibold">Invoice #:</span> {invoice.invoice_number}</p>
+                  <p className="text-gray-600"><span className="font-semibold">Date:</span> {format(new Date(invoice.invoice_date), "MMM dd, yyyy")}</p>
                   {invoice.due_date && (
-                    <p><span className="font-semibold">Due:</span> {format(new Date(invoice.due_date), "MMM dd, yyyy")}</p>
+                    <p className="text-gray-600"><span className="font-semibold">Due:</span> {format(new Date(invoice.due_date), "MMM dd, yyyy")}</p>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Bill To */}
-            <div className="mb-12">
-              <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Bill To</h2>
-              <div className="text-gray-900">
-                <p className="font-semibold text-lg">{invoice.client_name}</p>
-                {invoice.client_email && <p className="text-gray-600">{invoice.client_email}</p>}
-                {invoice.client_address && <p className="text-gray-600 whitespace-pre-line">{invoice.client_address}</p>}
-                {invoice.client_gst_number && <p className="text-gray-600">GST: {invoice.client_gst_number}</p>}
-                {invoice.client_pan_number && <p className="text-gray-600">PAN: {invoice.client_pan_number}</p>}
               </div>
             </div>
 
