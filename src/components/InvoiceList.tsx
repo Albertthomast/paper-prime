@@ -28,6 +28,7 @@ interface InvoiceListProps {
 export const InvoiceList = ({ onCreateInvoice, onEditInvoice, onViewSettings }: InvoiceListProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [quotations, setQuotations] = useState<Invoice[]>([]);
+  const [proformas, setProformas] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +47,7 @@ export const InvoiceList = ({ onCreateInvoice, onEditInvoice, onViewSettings }: 
       const allInvoices = data || [];
       setInvoices(allInvoices.filter(inv => inv.invoice_type === "invoice"));
       setQuotations(allInvoices.filter(inv => inv.invoice_type === "quote"));
+      setProformas(allInvoices.filter(inv => inv.invoice_type === "proforma"));
     } catch (error) {
       console.error("Error loading invoices:", error);
       toast({
@@ -95,7 +97,7 @@ export const InvoiceList = ({ onCreateInvoice, onEditInvoice, onViewSettings }: 
           <div className="text-center py-12">
             <p className="text-muted-foreground">Loading...</p>
           </div>
-        ) : invoices.length === 0 && quotations.length === 0 ? (
+        ) : invoices.length === 0 && quotations.length === 0 && proformas.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <FileText className="h-16 w-16 text-muted-foreground mb-4" />
@@ -173,6 +175,43 @@ export const InvoiceList = ({ onCreateInvoice, onEditInvoice, onViewSettings }: 
                             </p>
                             <Badge className={getStatusColor(quote.status)}>
                               {quote.status}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Proforma Invoices Section */}
+            {proformas.length > 0 && (
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Proforma Invoices</h2>
+                <div className="grid gap-4">
+                  {proformas.map((proforma) => (
+                    <Card
+                      key={proforma.id}
+                      className="hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => onEditInvoice(proforma.id)}
+                    >
+                      <CardHeader>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="text-xl mb-2">
+                              Proforma Invoice #{proforma.invoice_number}
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                              {proforma.client_name} • {format(new Date(proforma.invoice_date), "MMM dd, yyyy")}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-2xl font-bold text-foreground">
+                              {getCurrencySymbol(proforma.currency)}{proforma.total.toFixed(2)}
+                            </p>
+                            <Badge className={getStatusColor(proforma.status)}>
+                              {proforma.status}
                             </Badge>
                           </div>
                         </div>

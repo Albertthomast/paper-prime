@@ -17,7 +17,7 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
-    documentTitle: `${invoice.invoice_type === "quote" ? "Quote" : "Invoice"}-${invoice.invoice_number}`,
+    documentTitle: `${invoice.invoice_type === "quote" ? "Quote" : invoice.invoice_type === "proforma" ? "Proforma-Invoice" : "Invoice"}-${invoice.invoice_number}`,
     pageStyle: `
       @page {
         size: A4;
@@ -49,9 +49,10 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
         {/* Invoice Preview */}
         <div className="bg-white shadow-2xl rounded-lg overflow-hidden">
           <div ref={printRef} className="p-16" style={{ width: "210mm", minHeight: "297mm" }}>
-            {/* Header */}
+            {/* Header with company info on left, invoice details on right */}
             <div className="flex justify-between mb-12">
-              <div>
+              {/* Left side - Company info */}
+              <div className="flex-1">
                 {companySettings?.logo_url && (
                   <img 
                     src={companySettings.logo_url} 
@@ -59,10 +60,8 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                     className="h-16 mb-4 object-contain" 
                   />
                 )}
-                <h1 className="text-5xl font-bold text-gray-900 mb-4">
-                  {invoice.invoice_type === "quote" ? "QUOTE" : "INVOICE"}
-                </h1>
                 <div className="text-gray-600">
+                  <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">Bill From</h2>
                   {companySettings && (
                     <>
                       <p className="font-semibold text-lg text-gray-900">{companySettings.company_name}</p>
@@ -75,16 +74,18 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                   )}
                 </div>
               </div>
+              
+              {/* Right side - Invoice details */}
               <div className="text-right">
+                <h1 className="text-5xl font-bold text-gray-900 mb-4">
+                  {invoice.invoice_type === "quote" ? "QUOTE" : invoice.invoice_type === "proforma" ? "PROFORMA INVOICE" : "INVOICE"}
+                </h1>
                 <p className="text-3xl font-bold text-blue-600 mb-2">#{invoice.invoice_number}</p>
                 <div className="text-gray-600 space-y-1">
                   <p><span className="font-semibold">Date:</span> {format(new Date(invoice.invoice_date), "MMM dd, yyyy")}</p>
                   {invoice.due_date && (
                     <p><span className="font-semibold">Due:</span> {format(new Date(invoice.due_date), "MMM dd, yyyy")}</p>
                   )}
-                  <p className="inline-block px-3 py-1 bg-gray-100 rounded text-sm font-medium mt-2">
-                    {invoice.status.toUpperCase()}
-                  </p>
                 </div>
               </div>
             </div>

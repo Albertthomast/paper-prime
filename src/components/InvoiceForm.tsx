@@ -27,7 +27,7 @@ interface InvoiceFormProps {
 }
 
 export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
-  const [invoiceType, setInvoiceType] = useState<"invoice" | "quote">("invoice");
+  const [invoiceType, setInvoiceType] = useState<"invoice" | "quote" | "proforma">("invoice");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState("");
@@ -118,10 +118,17 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   const generateInvoiceNumber = async () => {
     if (!companySettings) return;
     
-    const prefix = invoiceType === "invoice" ? "INV" : "EQ";
-    const number = invoiceType === "invoice" 
-      ? companySettings.next_invoice_number 
-      : companySettings.next_quotation_number;
+    let prefix = "INV";
+    let number = companySettings.next_invoice_number;
+    
+    if (invoiceType === "quote") {
+      prefix = "EQ";
+      number = companySettings.next_quotation_number;
+    } else if (invoiceType === "proforma") {
+      prefix = "PI";
+      number = companySettings.next_proforma_number;
+    }
+    
     const dateStr = format(new Date(), "yyMMdd");
     
     setInvoiceNumber(`${prefix}${String(number).padStart(4, "0")}${dateStr}`);
@@ -146,7 +153,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
     }
 
     if (invoice) {
-      setInvoiceType(invoice.invoice_type as "invoice" | "quote");
+      setInvoiceType(invoice.invoice_type as "invoice" | "quote" | "proforma");
       setInvoiceNumber(invoice.invoice_number);
       setInvoiceDate(invoice.invoice_date);
       setDueDate(invoice.due_date || "");
@@ -330,11 +337,16 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         if (error) throw error;
         savedInvoiceId = data.id;
 
-        // Update next invoice/quotation number
+        // Update next invoice/quotation/proforma number
         if (companySettings) {
-          const updateField = invoiceType === "invoice" 
-            ? { next_invoice_number: companySettings.next_invoice_number + 1 }
-            : { next_quotation_number: companySettings.next_quotation_number + 1 };
+          let updateField = {};
+          if (invoiceType === "invoice") {
+            updateField = { next_invoice_number: companySettings.next_invoice_number + 1 };
+          } else if (invoiceType === "quote") {
+            updateField = { next_quotation_number: companySettings.next_quotation_number + 1 };
+          } else if (invoiceType === "proforma") {
+            updateField = { next_proforma_number: companySettings.next_proforma_number + 1 };
+          }
           
           await supabase
             .from("company_settings")
@@ -423,7 +435,14 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                 Delete
               </Button>
             )}
-            <Button variant="outline" onClick={() => setShowPreview(true)}>
+            <Button variant="outline" onClick={async () => {
+              if (!invoiceId && clientName) {
+                await saveInvoice();
+              } else if (invoiceId && hasChanges) {
+                await autoSave();
+              }
+              setShowPreview(true);
+            }}>
               <FileDown className="mr-2 h-4 w-4" />
               Preview & Export PDF
             </Button>
@@ -444,19 +463,26 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Type</Label>
-                  <Select value={invoiceType} onValueChange={(val) => setInvoiceType(val as "invoice" | "quote")}>
+                  <Select value={invoiceType} onValueChange={(val) => {
+                    setInvoiceType(val as "invoice" | "quote" | "proforma");
+                    setHasChanges(true);
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="invoice">Invoice</SelectItem>
                       <SelectItem value="quote">Quote</SelectItem>
+                      <SelectItem value="proforma">Proforma Invoice</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Select value={status} onValueChange={setStatus}>
+                  <Select value={status} onValueChange={(val) => {
+                    setStatus(val);
+                    setHasChanges(true);
+                  }}>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -473,15 +499,24 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <Label>Invoice Number</Label>
-                  <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} />
+                  <Input value={invoiceNumber} onChange={(e) => {
+                    setInvoiceNumber(e.target.value);
+                    setHasChanges(true);
+                  }} />
                 </div>
                 <div>
                   <Label>Invoice Date</Label>
-                  <Input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} />
+                  <Input type="date" value={invoiceDate} onChange={(e) => {
+                    setInvoiceDate(e.target.value);
+                    setHasChanges(true);
+                  }} />
                 </div>
                 <div>
                   <Label>Due Date</Label>
-                  <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                  <Input type="date" value={dueDate} onChange={(e) => {
+                    setDueDate(e.target.value);
+                    setHasChanges(true);
+                  }} />
                 </div>
               </div>
             </CardContent>
@@ -636,7 +671,10 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               <div className="mt-6 space-y-2 border-t pt-4">
                 <div className="flex justify-between items-center mb-2">
                   <span className="text-sm font-medium">Currency:</span>
-                  <Select value={currency} onValueChange={setCurrency}>
+                  <Select value={currency} onValueChange={(val) => {
+                    setCurrency(val);
+                    setHasChanges(true);
+                  }}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
@@ -657,7 +695,10 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                 
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-2">
-                    <Switch checked={gstEnabled} onCheckedChange={setGstEnabled} />
+                    <Switch checked={gstEnabled} onCheckedChange={(val) => {
+                      setGstEnabled(val);
+                      setHasChanges(true);
+                    }} />
                     <span>GST ({gstRate}%):</span>
                   </div>
                   <span className="font-semibold">{getCurrencySymbol(currency)}{calculateGst().toFixed(2)}</span>
@@ -679,13 +720,19 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
             <CardContent className="grid gap-4">
               <div>
                 <Label>Payment Terms</Label>
-                <Input value={paymentTerms} onChange={(e) => setPaymentTerms(e.target.value)} />
+                <Input value={paymentTerms} onChange={(e) => {
+                  setPaymentTerms(e.target.value);
+                  setHasChanges(true);
+                }} />
               </div>
               <div>
                 <Label>Notes</Label>
                 <Textarea
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                    setHasChanges(true);
+                  }}
                   placeholder="Additional notes or terms..."
                   rows={4}
                 />

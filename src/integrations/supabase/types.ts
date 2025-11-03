@@ -68,6 +68,7 @@ export type Database = {
           ifsc_code: string | null
           logo_url: string | null
           next_invoice_number: number
+          next_proforma_number: number
           next_quotation_number: number
           pan_number: string | null
           updated_at: string
@@ -89,6 +90,7 @@ export type Database = {
           ifsc_code?: string | null
           logo_url?: string | null
           next_invoice_number?: number
+          next_proforma_number?: number
           next_quotation_number?: number
           pan_number?: string | null
           updated_at?: string
@@ -110,6 +112,7 @@ export type Database = {
           ifsc_code?: string | null
           logo_url?: string | null
           next_invoice_number?: number
+          next_proforma_number?: number
           next_quotation_number?: number
           pan_number?: string | null
           updated_at?: string
