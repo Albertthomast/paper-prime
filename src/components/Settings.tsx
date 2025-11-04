@@ -41,6 +41,8 @@ export const Settings = ({ onBack }: SettingsProps) => {
   const [newClientGstNumber, setNewClientGstNumber] = useState("");
   const [newClientPanNumber, setNewClientPanNumber] = useState("");
   const [addingClient, setAddingClient] = useState(false);
+  const [customUnits, setCustomUnits] = useState<string[]>([]);
+  const [newUnit, setNewUnit] = useState("");
 
   useEffect(() => {
     loadSettings();
@@ -69,6 +71,7 @@ export const Settings = ({ onBack }: SettingsProps) => {
       setGstEnabled(data.gst_enabled);
       setGstRate(data.gst_rate);
       setDefaultPaymentTerms(data.default_payment_terms);
+      setCustomUnits(data.custom_units || []);
     }
   };
 
@@ -234,6 +237,7 @@ export const Settings = ({ onBack }: SettingsProps) => {
         gst_enabled: gstEnabled,
         gst_rate: gstRate,
         default_payment_terms: defaultPaymentTerms,
+        custom_units: customUnits,
       };
 
       const { error } = await supabase
@@ -419,6 +423,67 @@ export const Settings = ({ onBack }: SettingsProps) => {
                   placeholder="Due within 30 days"
                 />
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Custom Units */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Custom Units</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Add Custom Unit</Label>
+                <div className="flex gap-2">
+                  <Input
+                    value={newUnit}
+                    onChange={(e) => setNewUnit(e.target.value)}
+                    placeholder="e.g., Hours, Days, Pages"
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && newUnit.trim()) {
+                        setCustomUnits([...customUnits, newUnit.trim()]);
+                        setNewUnit("");
+                      }
+                    }}
+                  />
+                  <Button
+                    onClick={() => {
+                      if (newUnit.trim()) {
+                        setCustomUnits([...customUnits, newUnit.trim()]);
+                        setNewUnit("");
+                      }
+                    }}
+                    disabled={!newUnit.trim()}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add
+                  </Button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Default units: Item, Shots, Sec, Minute
+                </p>
+              </div>
+              
+              {customUnits.length > 0 && (
+                <div>
+                  <Label>Your Custom Units</Label>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {customUnits.map((unit, index) => (
+                      <div key={index} className="flex items-center gap-1 bg-muted px-3 py-1 rounded-md">
+                        <span>{unit}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => setCustomUnits(customUnits.filter((_, i) => i !== index))}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 

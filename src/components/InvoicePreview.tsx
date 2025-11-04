@@ -113,6 +113,7 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
               <thead>
                 <tr className="border-b-2 border-gray-900">
                   <th className="text-left py-3 text-sm font-semibold text-gray-700 uppercase">Description</th>
+                  <th className="text-right py-3 text-sm font-semibold text-gray-700 uppercase w-24">Unit</th>
                   <th className="text-right py-3 text-sm font-semibold text-gray-700 uppercase w-24">Qty</th>
                   <th className="text-right py-3 text-sm font-semibold text-gray-700 uppercase w-32">Rate</th>
                   <th className="text-right py-3 text-sm font-semibold text-gray-700 uppercase w-32">Amount</th>
@@ -122,6 +123,7 @@ export const InvoicePreview = ({ invoice, lineItems, companySettings, onBack }: 
                 {lineItems.map((item, index) => (
                   <tr key={index} className="border-b border-gray-200">
                     <td className="py-4 text-gray-900">{item.description}</td>
+                    <td className="py-4 text-right text-gray-700 capitalize">{item.unit}</td>
                     <td className="py-4 text-right text-gray-700">{item.quantity}</td>
                     <td className="py-4 text-right text-gray-700">{getCurrencySymbol(invoice.currency)}{item.rate.toFixed(2)}</td>
                     <td className="py-4 text-right font-semibold text-gray-900">{getCurrencySymbol(invoice.currency)}{item.amount.toFixed(2)}</td>

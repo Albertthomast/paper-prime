@@ -19,6 +19,7 @@ interface LineItem {
   quantity: number;
   rate: number;
   amount: number;
+  unit: string;
 }
 
 interface InvoiceFormProps {
@@ -38,7 +39,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   const [clientGstNumber, setClientGstNumber] = useState("");
   const [clientPanNumber, setClientPanNumber] = useState("");
   const [lineItems, setLineItems] = useState<LineItem[]>([
-    { description: "", quantity: 1, rate: 0, amount: 0 },
+    { description: "", quantity: 1, rate: 0, amount: 0, unit: "item" },
   ]);
   const [gstEnabled, setGstEnabled] = useState(true);
   const [gstRate, setGstRate] = useState(10);
@@ -167,7 +168,12 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
       setGstEnabled(invoice.gst_enabled);
       setPaymentTerms(invoice.payment_terms || "");
       setNotes(invoice.notes || "");
-      setLineItems(invoice.line_items || [{ description: "", quantity: 1, rate: 0, amount: 0 }]);
+      setLineItems(
+        (invoice.line_items || []).map((item: any) => ({
+          ...item,
+          unit: item.unit || "item",
+        })) || [{ description: "", quantity: 1, rate: 0, amount: 0, unit: "item" }]
+      );
     }
   };
 
@@ -189,7 +195,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
   };
 
   const addLineItem = () => {
-    setLineItems([...lineItems, { description: "", quantity: 1, rate: 0, amount: 0 }]);
+    setLineItems([...lineItems, { description: "", quantity: 1, rate: 0, amount: 0, unit: "item" }]);
   };
 
   const removeLineItem = (index: number) => {
@@ -247,6 +253,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         quantity: item.quantity,
         rate: item.rate,
         amount: item.amount,
+        unit: item.unit,
         sort_order: index,
       }));
 
@@ -362,6 +369,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
         quantity: item.quantity,
         rate: item.rate,
         amount: item.amount,
+        unit: item.unit,
         sort_order: index,
       }));
 
@@ -621,7 +629,7 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
               <div className="space-y-4">
                 {lineItems.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-4 items-end">
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <Label>Description</Label>
                       <Input
                         value={item.description}
@@ -630,7 +638,29 @@ export const InvoiceForm = ({ invoiceId, onBack }: InvoiceFormProps) => {
                       />
                     </div>
                     <div className="col-span-2">
-                      <Label>Quantity</Label>
+                      <Label>Unit</Label>
+                      <Select
+                        value={item.unit}
+                        onValueChange={(val) => updateLineItem(index, "unit", val)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="item">Item</SelectItem>
+                          <SelectItem value="shots">Shots</SelectItem>
+                          <SelectItem value="sec">Sec</SelectItem>
+                          <SelectItem value="minute">Minute</SelectItem>
+                          {companySettings?.custom_units?.map((unit: string) => (
+                            <SelectItem key={unit} value={unit.toLowerCase()}>
+                              {unit}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-1">
+                      <Label>Qty</Label>
                       <Input
                         type="number"
                         value={item.quantity}
