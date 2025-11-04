@@ -60,6 +60,7 @@ export type Database = {
           company_phone: string | null
           created_at: string
           currency: string
+          custom_units: string[] | null
           default_payment_terms: string | null
           gst_enabled: boolean
           gst_number: string | null
@@ -82,6 +83,7 @@ export type Database = {
           company_phone?: string | null
           created_at?: string
           currency?: string
+          custom_units?: string[] | null
           default_payment_terms?: string | null
           gst_enabled?: boolean
           gst_number?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           company_phone?: string | null
           created_at?: string
           currency?: string
+          custom_units?: string[] | null
           default_payment_terms?: string | null
           gst_enabled?: boolean
           gst_number?: string | null
@@ -198,6 +201,7 @@ export type Database = {
           quantity: number
           rate: number
           sort_order: number
+          unit: string
         }
         Insert: {
           amount?: number
@@ -208,6 +212,7 @@ export type Database = {
           quantity?: number
           rate?: number
           sort_order?: number
+          unit?: string
         }
         Update: {
           amount?: number
@@ -218,6 +223,7 @@ export type Database = {
           quantity?: number
           rate?: number
           sort_order?: number
+          unit?: string
         }
         Relationships: [
           {
